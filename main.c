@@ -5,9 +5,8 @@
 #include <string.h>
 #include <time.h>
 
-#define MATRIX_SIZE 300
+#define MATRIX_SIZE 500
 
-//TODO: Refactor code so matrix is read from a file.
 /*double mat_in[MATRIX_SIZE][MATRIX_SIZE] = {{  49,    0,    0,    0,    0,    0,  203,    0,    0,    0,    0,  105,    0,    0,    0,    0,   63,  189,    0,   63,    0,    0,    0,    0,    0,    0,    0,   21,   21,    0, },
                                            {   0,  841,  638,    0,    0,    0,  783,    0,    0,    0,    0,  319,  406,    0,    0,    0,    0,    0,    0,  551,    0,  290,    0,    0,    0,    0,    0,    0,    0,    0, },
                                            {   0,  638,  845,    0,  532,    0,  594,    0,  190,  380,  418,  755,  308,  342,    0,    0,    0,    0,    0,  418,    0,  220,    0,    0,  532,    0,    0,    0,    0,    0, },
@@ -83,7 +82,8 @@ struct send_map {
 	int target_count;
 };
 
-int tiers[MATRIX_SIZE][MATRIX_SIZE];
+//int tiers[MATRIX_SIZE][MATRIX_SIZE];
+int **tiers;
 int current_tier;
 int current_tier_size;
 int zero_tier_size;
@@ -126,10 +126,12 @@ int main(int argc, char *argv[]) {
 
 	mat_in = malloc(sizeof(double*)*MATRIX_SIZE);
 	mat_res_verifier = malloc(sizeof(int*)*MATRIX_SIZE);
+	tiers = malloc(sizeof(int*)*MATRIX_SIZE);
 	for(i=0;i<MATRIX_SIZE;i++)
 	{
 		mat_in[i]=malloc(sizeof(double)*MATRIX_SIZE);
 		mat_res_verifier[i] = malloc(sizeof(int)*MATRIX_SIZE);
+		tiers[i] = malloc(sizeof(int)*MATRIX_SIZE);
 	}
 
 	if(rank_id==0)
@@ -543,16 +545,6 @@ void cdiv(double **matrix, int col_num_j) {
 	}
 }
 
-int has_node_left(struct node_info all_nodes[]) {
-	int i;
-	int res = 0;
-	for (i = 0; i < MATRIX_SIZE; i++) {
-		if (all_nodes[i].tier_level == -1)
-			return 1;
-	}
-	return res;
-}
-
 int check_sat(struct node_info node, int tier) {
 	int i, j, k;
 	int dep_count;
@@ -582,7 +574,12 @@ void dependency_checker(struct tier_map *all_nodes_sortmap, int num_proc) {
 	int col_counter1, col_counter2;
 
 	int i, j, k;
-	int fill_in_temp[MATRIX_SIZE][MATRIX_SIZE];
+	//int fill_in_temp[MATRIX_SIZE][MATRIX_SIZE];
+	int cols_left=MATRIX_SIZE;
+
+	int **fill_in_temp = malloc(sizeof(int*)*MATRIX_SIZE);
+	for(i=0;i<MATRIX_SIZE;i++)
+		fill_in_temp[i] = malloc(sizeof(int)*MATRIX_SIZE);
 
 	/*mat_in=(double**) malloc(sizeof(double)*MATRIX_SIZE);
 	for(i=0;i<MATRIX_SIZE;i++)
@@ -655,16 +652,17 @@ void dependency_checker(struct tier_map *all_nodes_sortmap, int num_proc) {
 	}
 	printf("\n\n");*/
 
-	for (i = 0; i < MATRIX_SIZE; i++) {
+	/*for (i = 0; i < MATRIX_SIZE; i++) {
 		for (j = 0; j < MATRIX_SIZE; j++) {
 			tiers[i][j] == -2;
 		}
-	}
+	}*/
 
 	j = 0;
 	for (i = 0; i < MATRIX_SIZE; i++) {
 		if (all_columns[i].dependency_count == 0) {
 			all_columns[i].tier_level = 0;
+			cols_left--;
 			tiers[0][j] = i;
 			j++;
 			zero_tier_size++;
@@ -672,7 +670,21 @@ void dependency_checker(struct tier_map *all_nodes_sortmap, int num_proc) {
 	}
 
 	current_tier = 1;
-	while (has_node_left(all_columns) == 1) {
+	/*while(cols_left>0){
+		current_tier_size = 0;
+		for (i = 0; i < MATRIX_SIZE; i++) {
+			if (all_columns[i].tier_level == -1 && check_sat(all_columns[i], current_tier)) {
+				all_columns[i].tier_level = current_tier;
+				cols_left--;
+				tiers[current_tier][current_tier_size] = i;
+				current_tier_size++;
+			}
+		}
+
+		current_tier++;
+	}*/
+	int threshold = MATRIX_SIZE*0.002;
+	while (current_tier<threshold){
 		current_tier_size = 0;
 		for (i = 0; i < MATRIX_SIZE; i++) {
 			if (all_columns[i].tier_level == -1 && check_sat(all_columns[i], current_tier)) {
@@ -681,9 +693,17 @@ void dependency_checker(struct tier_map *all_nodes_sortmap, int num_proc) {
 				current_tier_size++;
 			}
 		}
-
 		current_tier++;
 	}
+
+	for (i = 0; i < MATRIX_SIZE; i++) {
+		if (all_columns[i].tier_level == -1) {
+			all_columns[i].tier_level = current_tier;
+			tiers[current_tier][current_tier_size]=1;
+			current_tier++;
+		}
+	}
+
 
 /*	printf("Tier Info:\n");
 	for(i=0;i<MATRIX_SIZE;i++)
