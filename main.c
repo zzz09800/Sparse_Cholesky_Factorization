@@ -3,31 +3,42 @@
 #include <mpi/mpi.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
-#define MATRIX_SIZE 20
+#define MATRIX_SIZE 300
 
 //TODO: Refactor code so matrix is read from a file.
-double mat_in[MATRIX_SIZE][MATRIX_SIZE] = {{   9,   18,    0,   45,   39,   45,   18,   36,   27,    3,    6,   21,   30,   57,    9,   18,    0,   36,   48,   33 },
-                                           {  18,  100,   56,  162,   94,  170,   52,   96,  110,  126,   12,   58,   76,  258,   90,   92,  104,  200,  184,   82 },
-                                           {   0,   56,  130,  180,   14,   70,   50,  174,   49,  141,  135,  104,  131,  180,  162,  193,  208,  130,   77,  158 },
-                                           {  45,  162,  180,  476,  218,  320,  164,  435,  214,  207,  231,  262,  350,  542,  273,  376,  288,  355,  353,  398 },
-                                           {  39,   94,   14,  218,  394,  296,  102,  337,  309,  180,   56,  392,  311,  424,  119,  321,  232,  213,  468,  406 },
-                                           {  45,  170,   70,  320,  296,  430,  282,  381,  361,  270,  172,  394,  387,  646,  279,  423,  252,  373,  604,  284 },
-                                           {  18,   52,   50,  164,  102,  282,  722,  606,  246,  458,  379,  585,  470,  517,  515,  584,  542,  304,  684,  451 },
-                                           {  36,   96,  174,  435,  337,  381,  606, 1168,  570,  521,  756,  956,  829,  842,  856, 1133,  947,  483,  864,  925 },
-                                           {  27,  110,   49,  214,  309,  361,  246,  570,  601,  354,  375,  560,  568,  770,  462,  724,  406,  402,  710,  427 },
-                                           {   3,  126,  141,  207,  180,  270,  458,  521,  354, 1210,  418,  725,  588, 1075,  716,  674,  893,  646, 1007,  983 },
-                                           {   6,   12,  135,  231,   56,  172,  379,  756,  375,  418,  848,  801,  744,  698,  801, 1023,  730,  278,  639,  614 },
-                                           {  21,   58,  104,  262,  392,  394,  585,  956,  560,  725,  801, 1357, 1011, 1050,  900, 1265, 1057,  473, 1278, 1136 },
-                                           {  30,   76,  131,  350,  311,  387,  470,  829,  568,  588,  744, 1011, 1352, 1190, 1056, 1390,  850,  912, 1193,  937 },
-                                           {  57,  258,  180,  542,  424,  646,  517,  842,  770, 1075,  698, 1050, 1190, 2192, 1174, 1642, 1229, 1342, 1753, 1245 },
-                                           {   9,   90,  162,  273,  119,  279,  515,  856,  462,  716,  801,  900, 1056, 1174, 1250, 1480, 1252, 1013, 1237,  935 },
-                                           {  18,   92,  193,  376,  321,  423,  584, 1133,  724,  674, 1023, 1265, 1390, 1642, 1480, 2223, 1646, 1237, 1779, 1207 },
-                                           {   0,  104,  208,  288,  232,  252,  542,  947,  406,  893,  730, 1057,  850, 1229, 1252, 1646, 1822, 1138, 1524, 1344 },
-                                           {  36,  200,  130,  355,  213,  373,  304,  483,  402,  646,  278,  473,  912, 1342, 1013, 1237, 1138, 2045, 1922, 1262 },
-                                           {  48,  184,   77,  353,  468,  604,  684,  864,  710, 1007,  639, 1278, 1193, 1753, 1237, 1779, 1524, 1922, 3227, 1979 },
-                                           {  33,   82,  158,  398,  406,  284,  451,  925,  427,  983,  614, 1136,  937, 1245,  935, 1207, 1344, 1262, 1979, 2261 }};
-
+/*double mat_in[MATRIX_SIZE][MATRIX_SIZE] = {{  49,    0,    0,    0,    0,    0,  203,    0,    0,    0,    0,  105,    0,    0,    0,    0,   63,  189,    0,   63,    0,    0,    0,    0,    0,    0,    0,   21,   21,    0, },
+                                           {   0,  841,  638,    0,    0,    0,  783,    0,    0,    0,    0,  319,  406,    0,    0,    0,    0,    0,    0,  551,    0,  290,    0,    0,    0,    0,    0,    0,    0,    0, },
+                                           {   0,  638,  845,    0,  532,    0,  594,    0,  190,  380,  418,  755,  308,  342,    0,    0,    0,    0,    0,  418,    0,  220,    0,    0,  532,    0,    0,    0,    0,    0, },
+                                           {   0,    0,    0,  625,    0,  350,  100,    0,    0,  475,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0, },
+                                           {   0,    0,  532,    0, 1625,    0,    0,    0,  280,  560,  616,  756,    0,  504,    0,    0,    0,    0,    0,   29,    0,    0,  464,    0,  784,    0,  783,   29,    0,    0, },
+                                           {   0,    0,    0,  350,    0,  260,   56,    0,    0,  266,   16,    0,   64,    0,    0,    0,    0,  144,    0,    0,    0,  152,    0,    0,    0,    0,    0,    0,    0,  112, },
+                                           { 203,  783,  594,  100,    0,   56, 2162,    0,    0,   76,  552, 1092,  378,    0,    0,    0,  261,  783,    0,  774,    0,  966,    0,    0,    0,    0,    0,   87,   87,    0, },
+                                           {   0,    0,    0,    0,    0,    0,    0,  196,    0,    0,    0,    0,    0,    0,    0,  406,    0,    0,    0,    0,  238,  140,    0,    0,    0,    0,    0,    0,  294,   28, },
+                                           {   0,    0,  190,    0,  280,    0,    0,    0,  541,  683,  220,  270,  441,  180,  126,  462,    0,  504,  567,    0,  252,    0,    0,    0,  322,    0,    0,    0,    0,    0, },
+                                           {   0,    0,  380,  475,  560,  266,   76,    0,  683, 1434,  440,  540,  483,  360,  138,  506,    0,  552,  753,    0,  276,    0,    0,    0,  606,  264,    0,  336,  276,    0, },
+                                           {   0,    0,  418,    0,  616,   16,  552,    0,  220,  440, 1081,  939,   16,  396,    0,   80,    0,   36,    0,    0,    0,  705,  128,    0,  616,   64,    0,    0,  152,   28, },
+                                           { 105,  319,  755,    0,  756,    0, 1092,    0,  270,  540,  939, 1469,  492,  486,    0,    0,  135,  405,    0,  344,    0,  545,    0,    0,  756,    0,    0,   45,   45,  260, },
+                                           {   0,  406,  308,    0,    0,   64,  378,    0,  441,  483,   16,  492, 1381,    0,  126,  462,   42,  648,  619,  270,  252,  292,    0,    0,   42,   24,    4,    0,    4,  632, },
+                                           {   0,    0,  342,    0,  504,    0,    0,    0,  180,  360,  396,  486,    0,  808,    0,  110,    0,    0,    0,    0,    0,    0,  242,  220, 1142,  132,    0,    0,    0,    0, },
+                                           {   0,    0,    0,    0,    0,    0,    0,    0,  126,  138,    0,    0,  126,    0,  820,  132,    0,  144,  162,    0,   72,    0,    0,    0,  600,    0,    0,    0,    0,    0, },
+                                           {   0,    0,    0,    0,    0,    0,    0,  406,  462,  506,   80,    0,  462,  110,  132, 2179,    0,  528,  594,    0,  757,  479,  215,   50,  945,  272,    0,    0,  826,   58, },
+                                           {  63,    0,    0,    0,    0,    0,  261,    0,    0,    0,    0,  135,   42,    0,    0,    0,  603,  243,  546,  123,    0,  252,    0,    0,    0,  252,  150,   27,   69,    0, },
+                                           { 189,    0,    0,    0,    0,  144,  783,    0,  504,  552,   36,  405,  648,    0,  144,  528,  243, 1773,  648,  567,  288,  390,  192,    0,   48,    0,    0,   81,  417,  252, },
+                                           {   0,    0,    0,    0,    0,    0,    0,    0,  567,  753,    0,    0,  619,    0,  162,  594,  546,  648, 2102,   52,  324,    0,    0,    0,   54,  818,   52,  356,  305,  576, },
+                                           {  63,  551,  418,    0,   29,    0,  774,    0,    0,    0,    0,  344,  270,    0,    0,    0,  123,  567,   52, 1212,    0,  298,  592,    0,    0,   72,   31,   28,  787,  126, },
+                                           {   0,    0,    0,    0,    0,    0,    0,  238,  252,  276,    0,    0,  252,    0,   72,  757,    0,  288,  324,    0,  577,  170,    0,    0,   24,    0,  204,    0,  357,   34, },
+                                           {   0,  290,  220,    0,    0,  152,  966,  140,    0,    0,  705,  545,  292,    0,    0,  479,  252,  390,    0,  298,  170, 2395,  340,    0,  196,   42,  336,    0,  329,  286, },
+                                           {   0,    0,    0,    0,  464,    0,    0,    0,    0,    0,  128,    0,    0,  242,    0,  215,    0,  192,    0,  592,    0,  340, 2318,  110,  319,  386,  882,   16,  968,  504, },
+                                           {   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,  220,    0,   50,    0,    0,    0,    0,    0,    0,  110,  725,  290,   60,    0,  275,  425,    0, },
+                                           {   0,    0,  532,    0,  784,    0,    0,    0,  322,  606,  616,  756,   42, 1142,  600,  945,    0,   48,   54,    0,   24,  196,  319,  290, 3583,  450,    0,  702,   28,    0, },
+                                           {   0,    0,    0,    0,    0,    0,    0,    0,    0,  264,   64,    0,   24,  132,    0,  272,  252,    0,  818,   72,    0,   42,  386,   60,  450, 1109,   24,  802,  688,  432, },
+                                           {   0,    0,    0,    0,  783,    0,    0,    0,    0,    0,    0,    0,    4,    0,    0,    0,  150,    0,   52,   31,  204,  336,  882,    0,    0,   24, 1987,   27,  640,    0, },
+                                           {  21,    0,    0,    0,   29,    0,   87,    0,    0,  336,    0,   45,    0,    0,    0,    0,   27,   81,  356,   28,    0,    0,   16,  275,  702,  802,   27, 1629,  840,  108, },
+                                           {  21,    0,    0,    0,    0,    0,   87,  294,    0,  276,  152,   45,    4,    0,    0,  826,   69,  417,  305,  787,  357,  329,  968,  425,   28,  688,  640,  840, 3763,  742, },
+                                           {   0,    0,    0,    0,    0,  112,    0,   28,    0,    0,   28,  260,  632,    0,    0,   58,    0,  252,  576,  126,   34,  286,  504,    0,    0,  432,    0,  108,  742, 2970, }};
+*/
 /*
   3   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
   6   8   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
@@ -51,6 +62,8 @@ double mat_in[MATRIX_SIZE][MATRIX_SIZE] = {{   9,   18,    0,   45,   39,   45, 
  11   2  16   7  16   0  17   6   8  19   0  12   0   8   4   6   8  17   4  14
 */
 
+double **mat_in;
+int **mat_res_verifier;
 
 struct node_info {
 	int col_no;
@@ -94,21 +107,55 @@ void quick_sort(struct tier_map *all_nodes_sorted, int low, int high);
 
 int partition(struct tier_map *all_nodes_sortmap, int low, int high);
 
-void cdiv(double (*matrix)[MATRIX_SIZE], int col_num_i);
+void cdiv(double **matrix, int col_num_i);
 
-void cmod(double (*matrix)[MATRIX_SIZE], int col_num_j, int col_num_k);
+void cmod(double **matrix, int col_num_j, int col_num_k);
 
 int main(int argc, char *argv[]) {
 	MPI_Init(&argc, &argv);
 
 	int rank_id, num_proc;
 	int i, j, k;
+	double start_timer,end_timer,timer_period;
 
 	//rank_id=3;
 	//num_proc=4;
 	MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 	MPI_Request request;
+
+	mat_in = malloc(sizeof(double*)*MATRIX_SIZE);
+	mat_res_verifier = malloc(sizeof(int*)*MATRIX_SIZE);
+	for(i=0;i<MATRIX_SIZE;i++)
+	{
+		mat_in[i]=malloc(sizeof(double)*MATRIX_SIZE);
+		mat_res_verifier[i] = malloc(sizeof(int)*MATRIX_SIZE);
+	}
+
+	if(rank_id==0)
+	{
+		start_timer = clock();
+	}
+
+	FILE *fp1 = fopen("/home/andrew/CLionProjects/Belphegor-Generator/cmake-build-debug/res.txt","r");
+	for(i=0;i<MATRIX_SIZE;i++)
+	{
+		for(j=0;j<MATRIX_SIZE;j++)
+		{
+			fscanf(fp1,"%lf",&mat_in[i][j]);
+		}
+	}
+	fclose(fp1);
+
+	fp1 = fopen("/home/andrew/CLionProjects/Belphegor-Generator/cmake-build-debug/lower.txt","r");
+	for(i=0;i<MATRIX_SIZE;i++)
+	{
+		for(j=0;j<MATRIX_SIZE;j++)
+		{
+			fscanf(fp1,"%d",&mat_res_verifier[i][j]);
+		}
+	}
+	fclose(fp1);
 
 	zero_tier_size = 0;
 
@@ -124,6 +171,15 @@ int main(int argc, char *argv[]) {
 	double **buffer_mat = (double **) malloc(sizeof(double *) * MATRIX_SIZE);
 	for (i = 0; i < MATRIX_SIZE; i++) {
 		buffer_mat[i] = (double *) malloc(sizeof(double *) * MATRIX_SIZE);
+	}
+
+	printf("Pre-processing complete\n");
+	if(rank_id==0)
+	{
+		end_timer=clock();
+		timer_period = (end_timer-start_timer)/CLOCKS_PER_SEC;
+		printf("Pre-processing spent: %lf seconds\n", timer_period);
+		start_timer = clock();
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -260,7 +316,7 @@ int main(int argc, char *argv[]) {
 
 	}
 
-	for(iter=0;iter<total_iteration; iter++)
+	/*for(iter=0;iter<total_iteration; iter++)
 	{
 		current_node = &all_columns_orig[self_cols[iter]];
 		printf("Col %d going to: ",current_node->col_no);
@@ -269,7 +325,7 @@ int main(int argc, char *argv[]) {
 			printf("%d ",self_send_map[iter].target_procs[j]);
 		}
 		printf("\n");
-	}
+	}*/
 
 
 	for (iter = 0; iter < total_iteration; iter++) {
@@ -286,8 +342,6 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-
-	int sssss=0;
 
 	for (iter = 0; iter < total_iteration; iter++) {
 		current_node = &all_columns_orig[self_cols[iter]];
@@ -312,9 +366,7 @@ int main(int argc, char *argv[]) {
 				if (rank_id == recv_rank && available[recv_col]==1) {
 					//available[current_node->col_no] = 1;
 					cmod(mat_in, current_node->col_no, current_node->dependency_col[i]);
-					if(current_node->col_no==5){
-						printf("Cmoding %d with %d\n",current_node->col_no,current_node->dependency_col[i]);
-					}
+
 				} else if (available[recv_col] == 0) {
 					//printf("rank %d computing %d want to recv col %d from rank %d\n", rank_id, current_node->col_no, recv_col, recv_rank);
 					MPI_Irecv(buffer_mat[recv_col],
@@ -333,15 +385,11 @@ int main(int argc, char *argv[]) {
 					}
 
 					cmod(mat_in, current_node->col_no, current_node->dependency_col[i]);
-					if(current_node->col_no==5){
-						printf("Cmoding %d with %d\n",current_node->col_no,current_node->dependency_col[i]);
-					}
+
 				} else {
 					//printf("rank %d computing %d start without communication\n",rank_id,current_node->col_no);
 					cmod(mat_in, current_node->col_no, current_node->dependency_col[i]);
-					if(current_node->col_no==5){
-						printf("Cmoding %d with %d\n",current_node->col_no,current_node->dependency_col[i]);
-					}
+
 				}
 			}
 
@@ -423,7 +471,7 @@ int main(int argc, char *argv[]) {
 	MPI_Wait(&request, MPI_STATUSES_IGNORE);
 
 	// test final result
-	if(rank_id==0)
+	/*if(rank_id==0)
 	{
 		for(i=0;i<MATRIX_SIZE;i++)
 		{
@@ -436,12 +484,46 @@ int main(int argc, char *argv[]) {
 			}
 			printf("\n");
 		}
+	}*/
+
+	if(rank_id==0)
+	{
+		end_timer=clock();
+		timer_period = (end_timer-start_timer)/CLOCKS_PER_SEC;
+		printf("Computation spent: %lf seconds\n", timer_period);
 	}
+
+	if(rank_id==0){
+		int error_flag=0;
+		for(i=0;i<MATRIX_SIZE;i++)
+		{
+			for(j=0;j<MATRIX_SIZE;j++)
+			{
+				if(i>=j)
+				{
+					if(mat_in[i][j]!=mat_res_verifier[i][j])
+					{
+						printf("Well, fucked up.\n");
+						error_flag=1;
+						break;
+					}
+				}
+			}
+			if(error_flag==1)
+				break;
+		}
+		if(error_flag==0)
+		{
+			printf("Test passed.\n");
+		}
+	}
+
+
 
 	MPI_Finalize();
 }
 
-void cmod(double (*matrix)[MATRIX_SIZE], int col_num_j, int col_num_k) {
+void cmod(double **matrix, int col_num_j, int col_num_k) {
 	int i, j, k;
 	j = col_num_j;
 	k = col_num_k;
@@ -451,7 +533,7 @@ void cmod(double (*matrix)[MATRIX_SIZE], int col_num_j, int col_num_k) {
 	}
 }
 
-void cdiv(double (*matrix)[MATRIX_SIZE], int col_num_j) {
+void cdiv(double **matrix, int col_num_j) {
 	int i, j;
 	j = col_num_j;
 	matrix[col_num_j][col_num_j] = sqrt(matrix[col_num_j][col_num_j]);
@@ -478,7 +560,7 @@ int check_sat(struct node_info node, int tier) {
 
 	for (dep_count = 0; dep_count < node.dependency_count; dep_count++) {
 		found_flag = 0;
-		for (i = 0; i < tier; i++) {
+		for (i = tier-1; i >=0; i--) {
 			for (j = 0; j < MATRIX_SIZE; j++) {
 				if (tiers[i][j] == node.dependency_col[dep_count]) {
 					found_flag = 1;
