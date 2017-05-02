@@ -5,7 +5,7 @@
 #include <string.h>
 #include <time.h>
 
-#define MATRIX_SIZE 500
+#define MATRIX_SIZE 1000
 
 /* Timing Guidelines:
  *  1. Small matrix (~600x600)
@@ -102,6 +102,7 @@ int **self_recv_map;
 
 int **rank_col_map;
 int *iteration_per_rank;
+int rank_id, num_proc;
 
 int has_node_left(struct node_info all_nodes[]);
 
@@ -117,10 +118,10 @@ void cdiv(double **matrix, int col_num_i);
 
 void cmod(double **matrix, int col_num_j, int col_num_k);
 
+
 int main(int argc, char *argv[]) {
 	MPI_Init(&argc, &argv);
 
-	int rank_id, num_proc;
 	int i, j, k;
 	double start_timer,end_timer,timer_period;
 
@@ -146,6 +147,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	FILE *fp1 = fopen("/home/andrew/CLionProjects/Belphegor-Generator/cmake-build-debug/res.txt","r");
+	//FILE *fp1 = fopen(argv[1],"r");
 	for(i=0;i<MATRIX_SIZE;i++)
 	{
 		for(j=0;j<MATRIX_SIZE;j++)
@@ -156,6 +158,7 @@ int main(int argc, char *argv[]) {
 	fclose(fp1);
 
 	fp1 = fopen("/home/andrew/CLionProjects/Belphegor-Generator/cmake-build-debug/lower.txt","r");
+	//fp1 = fopen(argv[2],"r");
 	for(i=0;i<MATRIX_SIZE;i++)
 	{
 		for(j=0;j<MATRIX_SIZE;j++)
@@ -245,7 +248,7 @@ int main(int argc, char *argv[]) {
 
 		memcpy(rank_col_map[0], self_cols, sizeof(int) * total_iteration);
 		for (temp = 1; temp < num_proc; temp++) {
-			MPI_Irecv(rank_col_map[temp], iteration_per_rank[temp], MPI_INT, temp, temp, MPI_COMM_WORLD, &request);
+			MPI_Recv(rank_col_map[temp], iteration_per_rank[temp], MPI_INT, temp, temp, MPI_COMM_WORLD, MPI_STATUSES_IGNORE);
 		}
 	} else {
 		self_cols = (int *) malloc(sizeof(int) * total_iteration);
@@ -258,7 +261,7 @@ int main(int argc, char *argv[]) {
 		}
 		MPI_Isend(self_cols, total_iteration, MPI_INT, 0, rank_id, MPI_COMM_WORLD, &request);
 	}
-	MPI_Wait(&request, MPI_STATUSES_IGNORE);
+	//MPI_Wait(&request, MPI_STATUSES_IGNORE);
 
 	//test allocate cols to processors
 /*    if(rank_id==0) {
@@ -476,7 +479,7 @@ int main(int argc, char *argv[]) {
 			MPI_Send(buffer_mat[self_cols[i]], MATRIX_SIZE, MPI_DOUBLE, 0, rank_id, MPI_COMM_WORLD);
 		}
 	}
-	MPI_Wait(&request, MPI_STATUSES_IGNORE);
+	//MPI_Wait(&request, MPI_STATUSES_IGNORE);
 
 	// test final result
 	/*if(rank_id==0)
